@@ -1,6 +1,4 @@
 ﻿using Chat.api.Model;
-using Newtonsoft.Json;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -11,13 +9,14 @@ namespace Chat.api.Controllers
     [RoutePrefix("api/v1/sessions")]
     public class SessionController : ApiController
     {
-        private static readonly SessionContext Context = new SessionContext();
+        public static readonly SessionContext Context = new SessionContext();
 
         [Route("")]
         [HttpPost]
         public HttpResponseMessage Create()
         {
             var session = Context.CreateSession();
+            var id = Context.Sessions.IndexOf(session);
             var result = new
             {
                 data = new
@@ -31,19 +30,19 @@ namespace Chat.api.Controllers
                         {
                             links = new
                             {
-                                self = $"{Request.RequestUri}/{Context.Sessions.Count}/relationships/creator",
-                                related = $"{Request.RequestUri}/{Context.Sessions.Count}/creator"
+                                self = $"{Request.RequestUri}/{id}/relationships/creator",
+                                related = $"{Request.RequestUri}/{id}/creator"
                             }
                         },
                         data = new
                         {
                             type = "users",
-                            id = Context.Users.Count
+                            id = Context.Sessions.IndexOf(session)
                         }
                     },
                     links = new
                     {
-                        self = $"{Request.RequestUri}/{Context.Sessions.Count}"
+                        self = $"{Request.RequestUri}/{id}"
                     }
                 },
                 included = new[]
@@ -51,14 +50,14 @@ namespace Chat.api.Controllers
                     new
                     {
                         type ="users",
-                        id = Context.Users.Count,
+                        id = id,
                         attributes = new
                         {
-                            username = session.Creator.Username
+                            username = session.Creator
                         },
                         links = new
                         {
-                            self = $"{Request.RequestUri.ToString().Replace("sessions","users")}/{Context.Users.Count}"
+                            self = $"{Request.RequestUri.ToString().Replace("sessions","users")}/{Context.Sessions.IndexOf(session)}"
                         }
                     }
                 },

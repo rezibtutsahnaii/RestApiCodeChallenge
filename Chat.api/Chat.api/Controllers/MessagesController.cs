@@ -7,7 +7,8 @@ using System.Web.Http;
 
 namespace Chat.api.Controllers
 {
-    [RoutePrefix("messages")]
+    [JwtAuthorize]
+    [RoutePrefix("api/v1/messages")]
     public class MessagesController : ApiController
     {
         [Route("")]
