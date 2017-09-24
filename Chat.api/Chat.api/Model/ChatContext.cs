@@ -9,11 +9,23 @@ using System.Text;
 
 namespace Chat.api.Model
 {
-    public class SessionContext
+    public class ChatContext
     {
         public List<Session> Sessions { get; } = new List<Session>();
+        public List<Message> Messages { get; } = new List<Message>();
 
-        public string CreateUser() => $"user{new Random().Next(999999):000000}";
+        public Message CreateMessage(Session session, string text)
+        {
+            var message = new Message
+            {
+                Text = text,
+                Creator = session,
+                CreatedTime = DateTime.UtcNow
+            };
+
+            Messages.Add(message);
+            return message;
+        }
 
         public Session CreateSession()
         {
@@ -29,7 +41,9 @@ namespace Chat.api.Model
             return session;
         }
 
+        public string CreateUser() => $"user{new Random().Next(999999):000000}";
         public static readonly byte[] Secret = Encoding.UTF8.GetBytes(ConfigurationManager.AppSettings["secret"] ?? "this ain't no secret");
+
         public static JwtSecurityToken GenerateToken(string username)
         {
             var header = new JwtHeader { ["alg"] = "HS256" };

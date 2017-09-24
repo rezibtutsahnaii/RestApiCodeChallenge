@@ -13,7 +13,9 @@ namespace Chat.api.Controllers
             var tokenString = actionContext.Request.Headers.Authorization.Parameter;
             var token = tokenHandler.ReadToken(tokenString) as JwtSecurityToken;
             var matches = SessionController.Context.Sessions.Join(token.Claims, s => s.Creator, c => c.Value, (s, c) => s);
-            return matches.Any();
+            if (!matches.Any()) return false;
+            actionContext.ActionArguments.Add("session", matches.First());
+            return true;
         }
     }
 }

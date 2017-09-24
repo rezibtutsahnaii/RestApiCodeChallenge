@@ -9,7 +9,7 @@ namespace Chat.api.Controllers
     [RoutePrefix("api/v1/sessions")]
     public class SessionController : ApiController
     {
-        public static readonly SessionContext Context = new SessionContext();
+        public static readonly ChatContext Context = new ChatContext();
 
         [Route("")]
         [HttpPost]
@@ -22,7 +22,7 @@ namespace Chat.api.Controllers
                 data = new
                 {
                     type = "sessions",
-                    id = Context.Sessions.Count,
+                    id = id,
                     attributes = new { created_at = session.CreatedTime },
                     relationships = new
                     {
@@ -37,7 +37,7 @@ namespace Chat.api.Controllers
                         data = new
                         {
                             type = "users",
-                            id = Context.Sessions.IndexOf(session)
+                            id = id
                         }
                     },
                     links = new
@@ -57,7 +57,7 @@ namespace Chat.api.Controllers
                         },
                         links = new
                         {
-                            self = $"{Request.RequestUri.ToString().Replace("sessions","users")}/{Context.Sessions.IndexOf(session)}"
+                            self = $"{Request.RequestUri.ToString().Replace("sessions","users")}/{id}"
                         }
                     }
                 },

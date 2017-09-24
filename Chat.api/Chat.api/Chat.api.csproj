@@ -134,8 +134,9 @@
     <Compile Include="Controllers\JwtAuthorizeAttribute.cs" />
     <Compile Include="Controllers\MessagesController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
+    <Compile Include="Model\Message.cs" />
     <Compile Include="Model\Session.cs" />
-    <Compile Include="Model\SessionContext.cs" />
+    <Compile Include="Model\ChatContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Startup.cs" />
   </ItemGroup>
