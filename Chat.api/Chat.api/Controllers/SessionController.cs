@@ -16,6 +16,14 @@ namespace Chat.api.Controllers
         public HttpResponseMessage Create()
         {
             var session = Context.CreateSession();
+            var resp = GenerateResponse(session);
+            resp.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.api+json");
+            resp.Headers.Add("authorization", session.SecurityToken);
+            return resp;
+        }
+
+        private HttpResponseMessage GenerateResponse(Session session)
+        {
             var id = Context.Sessions.IndexOf(session);
             var result = new
             {
@@ -63,12 +71,7 @@ namespace Chat.api.Controllers
                 },
                 meta = new { }
             };
-            var resp = Request.CreateResponse(HttpStatusCode.Created, result);
-            resp.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.api+json");
-            resp.Headers.Add("authorization", session.SecurityToken);
-            return resp;
+            return Request.CreateResponse(HttpStatusCode.Created, result);
         }
-
-
     }
 }

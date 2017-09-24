@@ -16,20 +16,22 @@ namespace Chat.api.Controllers
         public async System.Threading.Tasks.Task<HttpResponseMessage> CreateAsync()
         {
             var session = ActionContext.ActionArguments["session"] as Session;
+            var message = SessionController.Context.CreateMessage(session, await GetMesageTextAsync());
+            var resp = GenerateResponse(message, session);
+            resp.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.api+json");
+            resp.Headers.Add("authorization", session.SecurityToken);
+            return resp;
+        }
+
+        private async System.Threading.Tasks.Task<string> GetMesageTextAsync()
+        {
             var msg = JsonConvert.DeserializeAnonymousType(await Request.Content.ReadAsStringAsync(),
-                new
-                {
-                    data = new
-                    {
-                        type = string.Empty,
-                        attributes = new
-                        {
-                            message = string.Empty
-                        }
-                    }
-                });
-            var text = msg.data.attributes.message;
-            var message = SessionController.Context.CreateMessage(session, text);
+                new { data = new { type = string.Empty, attributes = new { message = string.Empty } } });
+            return msg.data.attributes.message;
+        }
+
+        private HttpResponseMessage GenerateResponse(Message message, Session session)
+        {
             var sessionId = SessionController.Context.Sessions.IndexOf(session);
             var messageId = SessionController.Context.Messages.IndexOf(message);
             var result = new
@@ -78,10 +80,7 @@ namespace Chat.api.Controllers
                 },
                 meta = new { }
             };
-            var resp = Request.CreateResponse(HttpStatusCode.Created, result);
-            resp.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.api+json");
-            resp.Headers.Add("authorization", session.SecurityToken);
-            return resp;
+            return Request.CreateResponse(HttpStatusCode.Created, result);
         }
     }
 }
