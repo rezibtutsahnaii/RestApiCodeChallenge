@@ -134,7 +134,12 @@
     <Compile Include="Controllers\JwtAuthorizeAttribute.cs" />
     <Compile Include="Controllers\MessagesController.cs" />
     <Compile Include="Controllers\SessionController.cs" />
+    <Compile Include="Model\JsonApiMessage.cs" />
+    <Compile Include="Model\JsonApiPagination.cs" />
+    <Compile Include="Model\JsonApiRelationship.cs" />
+    <Compile Include="Model\JsonApiUser.cs" />
     <Compile Include="Model\Message.cs" />
+    <Compile Include="Model\SelfLink.cs" />
     <Compile Include="Model\Session.cs" />
     <Compile Include="Model\ChatContext.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

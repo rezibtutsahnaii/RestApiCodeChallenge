@@ -4,6 +4,10 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Web.Http;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 
 namespace Chat.api.Controllers
 {
@@ -11,6 +15,45 @@ namespace Chat.api.Controllers
     [RoutePrefix("api/v1/messages")]
     public class MessagesController : ApiController
     {
+        [Route("")]
+        [HttpGet]
+        public async System.Threading.Tasks.Task<HttpResponseMessage> ListAsync()
+        {
+            var session = ActionContext.ActionArguments["session"] as Session;
+            var query = Request.GetQueryNameValuePairs().ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+            if (!query.TryGetValue("page.number", out string startString) || !int.TryParse(startString, out int start))
+                return await BadRequest("Invalid query string").ExecuteAsync(CancellationToken.None);
+
+            if (!query.TryGetValue("page.size", out string sizeString) || !int.TryParse(sizeString, out int size))
+                return await BadRequest("Invalid query string").ExecuteAsync(CancellationToken.None);
+
+            var resp = GenerateResponse(start,size);
+            resp.Content.Headers.ContentType = new MediaTypeHeaderValue("application/vnd.api+json");
+            resp.Headers.Add("authorization", session.SecurityToken);
+            return resp;
+        }
+
+        private HttpResponseMessage GenerateResponse(int start, int size)
+        {
+            var userUri = Request.RequestUri.ToString().Replace("messages", "users");
+            var data = SessionController.Context.Messages.Skip(start).Take(size)
+                .Select(message => new JsonApiMessage(message, Request.RequestUri.ToString()))
+                .ToList();
+            var included = data.Select(d => d.relationships.creator.data.id)
+                .Distinct()
+                .Select(id => new JsonApiUser(userUri, SessionController.Context.Sessions[id].Creator, id));
+
+            var result = new
+            {
+                data = data,
+                included = included,
+                meta = new { count = data.Count },
+                links = new JsonApiPagination(Request.RequestUri, start, size, SessionController.Context.Messages.Count)
+            };
+            return Request.CreateResponse(HttpStatusCode.OK, result);
+        }
+
         [Route("")]
         [HttpPost]
         public async System.Threading.Tasks.Task<HttpResponseMessage> CreateAsync()
@@ -32,52 +75,12 @@ namespace Chat.api.Controllers
 
         private HttpResponseMessage GenerateResponse(Message message, Session session)
         {
-            var sessionId = SessionController.Context.Sessions.IndexOf(session);
-            var messageId = SessionController.Context.Messages.IndexOf(message);
+            var data = new JsonApiMessage(message, Request.RequestUri.ToString());
+            
             var result = new
             {
-                data = new
-                {
-                    type = "messages",
-                    id = messageId,
-                    attributes = new { created_at = session.CreatedTime, message = message.Text },
-                    relationships = new
-                    {
-                        creator = new
-                        {
-                            links = new
-                            {
-                                self = $"{Request.RequestUri}/{messageId}/relationships/creator",
-                                related = $"{Request.RequestUri}/{messageId}/creator"
-                            }
-                        },
-                        data = new
-                        {
-                            type = "users",
-                            id = sessionId
-                        }
-                    },
-                    links = new
-                    {
-                        self = $"{Request.RequestUri}/{messageId}"
-                    }
-                },
-                included = new[]
-                {
-                    new
-                    {
-                        type ="users",
-                        id = sessionId,
-                        attributes = new
-                        {
-                            username = session.Creator
-                        },
-                        links = new
-                        {
-                            self = $"{Request.RequestUri.ToString().Replace("messages","users")}/{sessionId}"
-                        }
-                    }
-                },
+                data = data,
+                included = new[] { new JsonApiUser(Request.RequestUri.ToString().Replace("messages","users"), session.Creator, data.relationships.creator.data.id) },
                 meta = new { }
             };
             return Request.CreateResponse(HttpStatusCode.Created, result);
